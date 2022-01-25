@@ -1,3 +1,3 @@
-src/webhook
-tls/example-webhook-tls.yaml
-webhook.yaml
+src/namespace-notifier
+tls/namespace-notifier-webhook-tls.yaml
+namespace-notifier-webhook.yaml

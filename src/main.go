@@ -28,12 +28,6 @@ type ServerParameters struct {
 	keyFile  string // path to the x509 private key matching `CertFile`
 }
 
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
 var parameters ServerParameters
 
 var (
@@ -88,17 +82,11 @@ func main() {
 
 	test()
 
-	http.HandleFunc("/", HandleRoot)
-	http.HandleFunc("/mutate", HandleMutate)
-
+	http.HandleFunc("/validate", HandleValidate)
 	log.Fatal(http.ListenAndServeTLS(":"+strconv.Itoa(parameters.port), parameters.certFile, parameters.keyFile, nil))
 }
 
-func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("HandleRoot!"))
-}
-
-func HandleMutate(w http.ResponseWriter, r *http.Request) {
+func HandleValidate(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	err := ioutil.WriteFile("/tmp/request", body, 0644)
 	if err != nil {
@@ -121,30 +109,30 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		admissionReviewReq.Request.Name,
 	)
 
-	var pod apiv1.Pod
+	var namespace apiv1.Namespace
 
-	err = json.Unmarshal(admissionReviewReq.Request.Object.Raw, &pod)
+	err = json.Unmarshal(admissionReviewReq.Request.Object.Raw, &namespace)
 
 	if err != nil {
-		fmt.Println(fmt.Errorf("could not unmarshal pod on admission request: %v", err))
+		fmt.Println(fmt.Errorf("could not unmarshal namespace on admission request: %v", err))
 	}
 
-	var patches []patchOperation
+	// var patches []patchOperation
 
-	// append label as an example mutation
-	labels := pod.ObjectMeta.Labels
-	labels["example-webhook"] = "it-worked"
+	// // append label as an example mutation
+	// labels := pod.ObjectMeta.Labels
+	// labels["example-webhook"] = "it-worked"
 
-	patches = append(patches, patchOperation{
-		Op:    "add",
-		Path:  "/metadata/labels",
-		Value: labels,
-	})
+	// patches = append(patches, patchOperation{
+	// 	Op:    "add",
+	// 	Path:  "/metadata/labels",
+	// 	Value: labels,
+	// })
 
-	patchBytes, err := json.Marshal(patches)
-	if err != nil {
-		fmt.Println(fmt.Errorf("could not marshal JSON patch: %v", err))
-	}
+	// patchBytes, err := json.Marshal(patches)
+	// if err != nil {
+	// 	fmt.Println(fmt.Errorf("could not marshal JSON patch: %v", err))
+	// }
 
 	admissionReviewResponse := v1beta1.AdmissionReview{
 		Response: &v1beta1.AdmissionResponse{
@@ -153,7 +141,7 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	admissionReviewResponse.Response.Patch = patchBytes
+	// admissionReviewResponse.Response.Patch = patchBytes
 
 	bytes, err := json.Marshal(&admissionReviewResponse)
 	if err != nil {

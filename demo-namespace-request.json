@@ -1,0 +1,84 @@
+{
+  "kind": "AdmissionReview",
+  "apiVersion": "admission.k8s.io/v1beta1",
+  "request": {
+    "uid": "06a51864-87b7-431e-8aeb-fce0a1f12ce3",
+    "kind": {
+      "group": "",
+      "version": "v1",
+      "kind": "Namespace"
+    },
+    "resource": {
+      "group": "",
+      "version": "v1",
+      "resource": "namespaces"
+    },
+    "requestKind": {
+      "group": "",
+      "version": "v1",
+      "kind": "Namespace"
+    },
+    "requestResource": {
+      "group": "",
+      "version": "v1",
+      "resource": "namespaces"
+    },
+    "name": "demo",
+    "namespace": "demo",
+    "operation": "CREATE",
+    "userInfo": {
+      "username": "kubernetes-admin",
+      "groups": [
+        "system:masters",
+        "system:authenticated"
+      ]
+    },
+    "object": {
+      "kind": "Namespace",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "demo",
+        "uid": "1a09fb70-f164-4b9c-9844-f06c4346d3ac",
+        "creationTimestamp": "2022-01-25T08:41:36Z",
+        "labels": {
+          "namespace-notifier-webhook-enabled": "true"
+        },
+        "managedFields": [
+          {
+            "manager": "kubectl-create",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2022-01-25T08:41:36Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:labels": {
+                  ".": {},
+                  "f:namespace-notifier-webhook-enabled": {}
+                }
+              },
+              "f:status": {
+                "f:phase": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "finalizers": [
+          "kubernetes"
+        ]
+      },
+      "status": {
+        "phase": "Active"
+      }
+    },
+    "oldObject": null,
+    "dryRun": false,
+    "options": {
+      "kind": "CreateOptions",
+      "apiVersion": "meta.k8s.io/v1",
+      "fieldManager": "kubectl-create"
+    }
+  }
+}

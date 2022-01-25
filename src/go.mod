@@ -1,4 +1,4 @@
-module example-webhook
+module namespace-notifier
 
 go 1.15
 

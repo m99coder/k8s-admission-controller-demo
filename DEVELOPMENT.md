@@ -3,10 +3,10 @@
 ```shell
 # build docker image
 cd src
-docker build . -t webhook
+docker build . -t namespace-notifier
 
 # run in `host` network and mount k8s config
-docker run -it --rm --net host -v ${HOME}/.kube/:/root/.kube/ -v ${PWD}:/app webhook sh
+docker run -it --rm --net host -v ${HOME}/.kube/:/root/.kube/ -v ${PWD}:/app namespace-notifier sh
 
 # install kubectl
 apk add --no-cache curl
@@ -19,15 +19,15 @@ kubectl get nodes
 
 # init module
 # to update run `go mod tidy`
-go mod init example-webhook
+go mod init namespace-notifier
 
 # build binary
 export CGO_ENABLED=0
-go build -o webhook
+go build -o namespace-notifier
 
 # run binary
 export USE_KUBECONFIG=true
-./webhook
+./namespace-notifier
 ```
 
 ## Deployment
@@ -47,7 +47,7 @@ kubectl -n default apply -f deployment.yaml
 
 # check running pods and only then deploy the webhook
 kubectl -n default get pods
-kubectl -n default apply -f webhook.yaml
+kubectl -n default apply -f namespace-notifier-webhook.yaml
 
 # check logs
 WEBHOOK_POD_NAME=`kubectl -n default get pods -l app=example-webhook -o json | jq -r '.items[0].metadata.name'`
