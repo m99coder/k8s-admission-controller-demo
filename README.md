@@ -54,6 +54,7 @@ kubectl logs $WEBHOOK_POD_NAME
 
 # modify namespace
 kubectl label namespaces demo foo=bar
+kubectl get namespaces --show-labels
 
 # unapply namespace
 kubectl delete -f demo-namespace.yaml
