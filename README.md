@@ -51,9 +51,17 @@ kubectl create -f demo-namespace.yaml
 # check logs
 WEBHOOK_POD_NAME=`kubectl -n default get pods -l app=namespace-notifier-webhook -o json | jq -r '.items[0].metadata.name'`
 kubectl logs $WEBHOOK_POD_NAME
+
+# modify namespace
+kubectl label namespaces demo foo=bar
+
+# unapply namespace
+kubectl delete -f demo-namespace.yaml
+kubectl logs $WEBHOOK_POD_NAME
 ```
 
 ## Resources
 
 - [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [Sample Namespace Notifier Docker image](https://hub.docker.com/r/m99coder/namespace-notifier-webhook)
 - [Sample Admission Review Request](./demo-namespace-request.json)
