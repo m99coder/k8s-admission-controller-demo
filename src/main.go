@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,6 +15,7 @@ import (
 
 	"k8s.io/api/admission/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
@@ -26,12 +28,6 @@ type ServerParameters struct {
 	port     int    // webhook server port
 	certFile string // path to the x509 certificate for https
 	keyFile  string // path to the x509 private key matching `CertFile`
-}
-
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 var parameters ServerParameters
@@ -86,24 +82,26 @@ func main() {
 	}
 	clientSet = cs
 
-	test()
-
-	http.HandleFunc("/", HandleRoot)
-	http.HandleFunc("/mutate", HandleMutate)
-
-	log.Fatal(http.ListenAndServeTLS(":"+strconv.Itoa(parameters.port), parameters.certFile, parameters.keyFile, nil))
-}
-
-func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("HandleRoot!"))
-}
-
-func HandleMutate(w http.ResponseWriter, r *http.Request) {
-	body, _ := ioutil.ReadAll(r.Body)
-	err := ioutil.WriteFile("/tmp/request", body, 0644)
+	// output number of namespaces (for debugging purposes only)
+	namespaces, err := clientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
+	fmt.Printf("There are %d namespaces in the cluster\n", len(namespaces.Items))
+
+	http.HandleFunc("/validate", HandleValidate)
+	log.Fatal(http.ListenAndServeTLS(":"+strconv.Itoa(parameters.port), parameters.certFile, parameters.keyFile, nil))
+}
+
+func HandleValidate(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+
+	// the request is written to disk and can be copied to local disk as follows:
+	// kubectl cp $WEBHOOK_POD_NAME:/tmp/request ./demo-namespace-request.json
+	// err := ioutil.WriteFile("/tmp/request", body, 0644)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
 	var admissionReviewReq v1beta1.AdmissionReview
 
@@ -121,29 +119,13 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		admissionReviewReq.Request.Name,
 	)
 
-	var pod apiv1.Pod
-
-	err = json.Unmarshal(admissionReviewReq.Request.Object.Raw, &pod)
-
-	if err != nil {
-		fmt.Println(fmt.Errorf("could not unmarshal pod on admission request: %v", err))
-	}
-
-	var patches []patchOperation
-
-	// append label as an example mutation
-	labels := pod.ObjectMeta.Labels
-	labels["example-webhook"] = "it-worked"
-
-	patches = append(patches, patchOperation{
-		Op:    "add",
-		Path:  "/metadata/labels",
-		Value: labels,
-	})
-
-	patchBytes, err := json.Marshal(patches)
-	if err != nil {
-		fmt.Println(fmt.Errorf("could not marshal JSON patch: %v", err))
+	// unmarshal namespace struct if operation was not a deletion
+	if admissionReviewReq.Request.Operation != "DELETE" {
+		var namespace apiv1.Namespace
+		err := json.Unmarshal(admissionReviewReq.Request.Object.Raw, &namespace)
+		if err != nil {
+			fmt.Println(fmt.Errorf("could not unmarshal namespace on admission request: %v", err))
+		}
 	}
 
 	admissionReviewResponse := v1beta1.AdmissionReview{
@@ -152,8 +134,6 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 			Allowed: true, // accept or reject mutation
 		},
 	}
-
-	admissionReviewResponse.Response.Patch = patchBytes
 
 	bytes, err := json.Marshal(&admissionReviewResponse)
 	if err != nil {

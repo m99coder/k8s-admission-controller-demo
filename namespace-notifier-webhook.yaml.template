@@ -1,24 +1,24 @@
 apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
+kind: ValidatingWebhookConfiguration
 metadata:
-  name: example-webhook
+  name: namespace-notifier-webhook
 webhooks:
-  - name: example-webhook.default.svc.cluster.local
+  - name: namespace-notifier-webhook.default.svc.cluster.local
     admissionReviewVersions:
       - "v1beta1"
     sideEffects: "None"
     timeoutSeconds: 30
     objectSelector:
       matchLabels:
-        example-webhook-enabled: "true"
+        namespace-notifier-webhook-enabled: "true"
     clientConfig:
       service:
-        name: example-webhook
+        name: namespace-notifier-webhook
         namespace: default
-        path: "/mutate"
+        path: "/validate"
       caBundle: "${CA_PEM_B64}"
     rules:
-      - operations: ["CREATE"]
+      - operations: ["CREATE", "UPDATE", "DELETE"]
         apiGroups: [""]
         apiVersions: ["v1"]
-        resources: ["pods"]
+        resources: ["namespaces"]

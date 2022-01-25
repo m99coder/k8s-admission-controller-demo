@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-webhook
+  name: namespace-notifier-webhook
   namespace: default
 spec:
   selector:
-    app: example-webhook
+    app: namespace-notifier-webhook
   ports:
     - port: 443
       targetPort: tls
@@ -17,29 +17,29 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-webhook
+  name: namespace-notifier-webhook
   namespace: default
   labels:
-    app: example-webhook
+    app: namespace-notifier-webhook
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example-webhook
+      app: namespace-notifier-webhook
   template:
     metadata:
       labels:
-        app: example-webhook
+        app: namespace-notifier-webhook
     spec:
       nodeSelector:
         kubernetes.io/os: linux
-      serviceAccountName: example-webhook
+      serviceAccountName: namespace-notifier-webhook
       securityContext:
         runAsNonRoot: true
         runAsUser: 1234
       containers:
       - name: server
-        image: m99coder/example-webhook:v1
+        image: m99coder/namespace-notifier-webhook:v1
         imagePullPolicy: Always
         ports:
         - containerPort: 8443
@@ -53,4 +53,4 @@ spec:
       volumes:
       - name: webhook-tls-certs
         secret:
-          secretName: example-webhook-tls
+          secretName: namespace-notifier-webhook-tls

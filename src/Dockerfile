@@ -8,11 +8,11 @@ RUN go mod download
 
 COPY . /app/
 
-RUN CGO_ENABLED=0 go build -o /webhook
+RUN CGO_ENABLED=0 go build -o /namespace-notifier
 
 FROM alpine:3.10 as runtime
 
-COPY --from=build-env /webhook /usr/local/bin/webhook
-RUN chmod +x /usr/local/bin/webhook
+COPY --from=build-env /namespace-notifier /usr/local/bin/namespace-notifier
+RUN chmod +x /usr/local/bin/namespace-notifier
 
-ENTRYPOINT ["webhook"]
+ENTRYPOINT ["namespace-notifier"]
